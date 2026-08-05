@@ -7,7 +7,7 @@ API_URL = "http://127.0.0.1:8000"
 st.title("Nihongo - Japanese Learning Assistant")
 
 
-tab_review, tab_add = st.tabs(["Review", "Add Word"])
+tab_review, tab_add, tab_stats = st.tabs(["Review", "Add Word", "Stats"])
 
 with tab_review:
     response = requests.get(f"{API_URL}/review/today")
@@ -27,20 +27,25 @@ with tab_review:
 
         st.write("Rate your recall quality (0-5):")
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            if st.button("hard (quality = 2)"):
-                requests.post(f"{API_URL}/review/{current_word['id']}/answer", json={"quality": 2})
+            if st.button("Again (quality=0)"):
+                requests.post(f"{API_URL}/review/{current_word['id']}/answer", json={"quality": 0})
                 st.rerun()
 
         with col2:
-            if st.button("medium (quality = 3)"):
-                requests.post(f"{API_URL}/review/{current_word['id']}/answer", json={"quality": 3})
+            if st.button("Hard (quality=2)"):
+                requests.post(f"{API_URL}/review/{current_word['id']}/answer", json={"quality": 2})
                 st.rerun()
 
         with col3:
-            if st.button("easy (quality = 5)"):
+            if st.button("Good (quality=3)"):
+                requests.post(f"{API_URL}/review/{current_word['id']}/answer", json={"quality": 3})
+                st.rerun()
+
+        with col4:
+            if st.button("Easy (quality=5)"):
                 requests.post(f"{API_URL}/review/{current_word['id']}/answer", json={"quality": 5})
                 st.rerun()
 
@@ -68,3 +73,14 @@ with tab_add:
                     st.success(f"Word '{kanji}' added successfully!")
                 else:
                     st.error("Something went wrong while adding the word. Please try again.")
+
+with tab_stats:
+    st.subheader("Your Learning Stats")
+    response = requests.get(f"{API_URL}/stats")
+    stats = response.json()
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric("Total Words", stats["total_words"])
+    col2.metric("Total Reviews", stats["total_reviews"])
+    col3.metric("Accuracy (%)", stats["accuracy"])

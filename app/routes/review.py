@@ -7,6 +7,7 @@ from app.models.word import Word
 from app.models.review_log import ReviewLog
 from app.schemas.word import WordResponse, ReviewAnswer
 from app.services.srs import calculate_next_review
+import random
 
 router = APIRouter()
 
@@ -14,7 +15,9 @@ router = APIRouter()
 @router.get("/review/today", response_model=list[WordResponse])
 def get_todays_reviews(db: Session = Depends(get_db)):
     today = date.today()
-    return db.query(Word).filter(Word.next_review_date <= today).all()
+    words = db.query(Word).filter(Word.next_review_date <= today).all()
+    random.shuffle(words)
+    return words
 
 
 @router.post("/review/{word_id}/answer", response_model=WordResponse)

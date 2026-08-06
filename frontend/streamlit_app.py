@@ -7,7 +7,7 @@ API_URL = "http://127.0.0.1:8000"
 st.title("Nihongo - Japanese Learning Assistant")
 
 
-tab_review, tab_add, tab_stats = st.tabs(["Review", "Add Word", "Stats"])
+tab_review, tab_add, tab_stats, tab_furigana = st.tabs(["Review", "Add Word", "Stats", "Furigana"])
 
 with tab_review:
     response = requests.get(f"{API_URL}/review/today")
@@ -84,3 +84,50 @@ with tab_stats:
     col1.metric("Total Words", stats["total_words"])
     col2.metric("Total Reviews", stats["total_reviews"])
     col3.metric("Accuracy (%)", stats["accuracy"])
+
+
+with tab_furigana:
+    st.subheader("Furigana generator")
+
+    text_input = st.text_area("Enter Japanese text")
+
+    if st.button("Analyze"):
+        response = requests.post(f"{API_URL}/furigana", json={"text": text_input})
+        st.session_state["furigana_tokens"] = response.json()["tokens"]
+
+    if "furigana_tokens" in st.session_state:
+        st.write("---")
+        for index, token in enumerate(st.session_state["furigana_tokens"]):
+            if token["has_kanji"]:
+                st.write(f"**{token['surface']}**")
+                col1, col2, col3 = st.columns([2, 2, 1])
+                with col1:
+                    reading = st.text_input(
+                        "Reading",
+                        value=token["reading"],
+                        key=f"reading_{index}",
+                        label_visibility="collapsed"
+                    )
+                with col2:
+                    meaning = st.text_input(
+                        "Meaning",
+                        key=f"meaning_{index}",
+                        placeholder="Meaning",
+                        label_visibility="collapsed"
+                    )
+                with col3:
+                    if st.button("Save", key=f"save_{index}"):
+                        if meaning:
+                            requests.post(
+                                f"{API_URL}/words",
+                                json={
+                                    "kanji": token["surface"],
+                                    "reading": reading,
+                                    "meaning": meaning
+                                }
+                            )
+                            st.success(f"Saved: {token['surface']}")
+                        else:
+                            st.warning("Enter a meaning first.")
+            else:
+                st.write(token["surface"])

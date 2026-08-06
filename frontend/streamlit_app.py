@@ -1,53 +1,63 @@
 
 import streamlit as st
 import requests
+import random
+import pandas as pd
 
 API_URL = "http://127.0.0.1:8000"
 
 st.title("Nihongo - Japanese Learning Assistant")
 
 
-tab_review, tab_add, tab_stats, tab_furigana = st.tabs(["Review", "Add Word", "Stats", "Furigana"])
+tab_review, tab_add, tab_stats, tab_furigana, tab_words = st.tabs(["Review", "Add Word", "Stats", "Furigana", "Words"])
 
 with tab_review:
-    response = requests.get(f"{API_URL}/review/today")
-    words = response.json()
+    if "review_queue" not in st.session_state:
+        response = requests.get(f"{API_URL}/review/today")
+        words = response.json()
+        random.shuffle(words)
+        st.session_state["review_queue"] = words
 
-    if not words:
-        st.write("No reviews for today! 🎉")
+    queue = st.session_state["review_queue"]
+
+    if not queue:
+        st.write("No words to review today! 🎉")
+        if st.button("Refresh"):
+            del st.session_state["review_queue"]
+            st.rerun()
     else:
-        st.write(f"Words to review today: {len(words)}")
+        st.write(f"{len(queue)} words left to review.")
 
-        current_word = words[0]
+        current_word = queue[0]
+
         st.header(current_word["kanji"])
         st.subheader(current_word["reading"])
 
-        if st.button("Show Meaning"):
+        if st.button("Show meaning"):
             st.write(current_word["meaning"])
 
-        st.write("Rate your recall quality (0-5):")
+        st.write("---")
+        st.write("How well did you remember it?")
 
         col1, col2, col3, col4 = st.columns(4)
 
+        def submit_review(quality):
+            requests.post(f"{API_URL}/review/{current_word['id']}/answer", json={"quality": quality})
+            st.session_state["review_queue"].pop(0)
+            st.rerun()
+
         with col1:
             if st.button("Again (quality=0)"):
-                requests.post(f"{API_URL}/review/{current_word['id']}/answer", json={"quality": 0})
-                st.rerun()
-
+                submit_review(0)
         with col2:
             if st.button("Hard (quality=2)"):
-                requests.post(f"{API_URL}/review/{current_word['id']}/answer", json={"quality": 2})
-                st.rerun()
-
+                submit_review(2)
         with col3:
             if st.button("Good (quality=3)"):
-                requests.post(f"{API_URL}/review/{current_word['id']}/answer", json={"quality": 3})
-                st.rerun()
-
+                submit_review(3)
         with col4:
             if st.button("Easy (quality=5)"):
-                requests.post(f"{API_URL}/review/{current_word['id']}/answer", json={"quality": 5})
-                st.rerun()
+                submit_review(5)
 
 with tab_add:
     st.subheader("Add a new word")
@@ -75,16 +85,16 @@ with tab_add:
                     st.error("Something went wrong while adding the word. Please try again.")
 
 with tab_stats:
-    st.subheader("Your Learning Stats")
+    st.subheader("Your progress")
+
     response = requests.get(f"{API_URL}/stats")
     stats = response.json()
 
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric("Total Words", stats["total_words"])
-    col2.metric("Total Reviews", stats["total_reviews"])
-    col3.metric("Accuracy (%)", stats["accuracy"])
-
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Total words", stats["total_words"])
+    col2.metric("Total reviews", stats["total_reviews"])
+    col3.metric("Accuracy", f"{stats['accuracy']}%")
+    col4.metric("Streak", f"{stats['current_streak']} 🔥")
 
 with tab_furigana:
     st.subheader("Furigana generator")
@@ -131,3 +141,28 @@ with tab_furigana:
                             st.warning("Enter a meaning first.")
             else:
                 st.write(token["surface"])
+
+
+with tab_words:
+    st.subheader("Your words")
+
+    response = requests.get(f"{API_URL}/words")
+    all_words = response.json()
+
+    if not all_words:
+        st.write("No words added yet.")
+    else:
+        df = pd.DataFrame(all_words)
+        st.dataframe(df[["kanji", "reading", "meaning", "repetitions", "next_review_date"]])
+
+        st.write("---")
+        st.write("Delete a word")
+
+        word_options = {f"{w['kanji']} ({w['meaning']})": w["id"] for w in all_words}
+        selected_label = st.selectbox("Select a word to delete", list(word_options.keys()))
+
+        if st.button("Delete"):
+            word_id = word_options[selected_label]
+            requests.delete(f"{API_URL}/words/{word_id}")
+            st.success(f"Deleted: {selected_label}")
+            st.rerun()

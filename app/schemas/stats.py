@@ -3,5 +3,5 @@ from pydantic import BaseModel
 class StatsResponse(BaseModel):
     total_words: int
     total_reviews: int
-    accuracy: int
+    accuracy: float
     current_streak: int

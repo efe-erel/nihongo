@@ -4,7 +4,7 @@ import requests
 import random
 import pandas as pd
 
-API_URL = "http://127.0.0.1:8000"
+API_URL = "http://127.0.0.1:8001"
 
 st.title("Nihongo - Japanese Learning Assistant")
 

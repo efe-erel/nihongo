@@ -64,15 +64,15 @@ Two processes need to run in parallel, in separate terminals:
 
 **Terminal 1 — Backend:**
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8001
 ```
-API docs available at `http://127.0.0.1:8000/docs`
+API docs available at `http://127.0.0.1:8001/docs`
 
 **Terminal 2 — Frontend:**
 ```bash
-streamlit run frontend/streamlit_app.py
+streamlit run frontend/streamlit_app.py --server.port 8502
 ```
-App available at `http://localhost:8501`
+App available at `http://localhost:8502`
 
 ## Running Tests
 

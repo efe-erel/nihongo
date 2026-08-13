@@ -4,12 +4,55 @@ import requests
 import random
 import pandas as pd
 
+HIRAGANA = [
+    [("あ", "a"), ("い", "i"), ("う", "u"), ("え", "e"), ("お", "o")],
+    [("か", "ka"), ("き", "ki"), ("く", "ku"), ("け", "ke"), ("こ", "ko")],
+    [("さ", "sa"), ("し", "shi"), ("す", "su"), ("せ", "se"), ("そ", "so")],
+    [("た", "ta"), ("ち", "chi"), ("つ", "tsu"), ("て", "te"), ("と", "to")],
+    [("な", "na"), ("に", "ni"), ("ぬ", "nu"), ("ね", "ne"), ("の", "no")],
+    [("は", "ha"), ("ひ", "hi"), ("ふ", "fu"), ("へ", "he"), ("ほ", "ho")],
+    [("ま", "ma"), ("み", "mi"), ("む", "mu"), ("め", "me"), ("も", "mo")],
+    [("や", "ya"), None, ("ゆ", "yu"), None, ("よ", "yo")],
+    [("ら", "ra"), ("り", "ri"), ("る", "ru"), ("れ", "re"), ("ろ", "ro")],
+    [("わ", "wa"), None, None, None, ("を", "wo")],
+    [("ん", "n"), None, None, None, None],
+]
+
+KATAKANA = [
+    [("ア", "a"), ("イ", "i"), ("ウ", "u"), ("エ", "e"), ("オ", "o")],
+    [("カ", "ka"), ("キ", "ki"), ("ク", "ku"), ("ケ", "ke"), ("コ", "ko")],
+    [("サ", "sa"), ("シ", "shi"), ("ス", "su"), ("セ", "se"), ("ソ", "so")],
+    [("タ", "ta"), ("チ", "chi"), ("ツ", "tsu"), ("テ", "te"), ("ト", "to")],
+    [("ナ", "na"), ("ニ", "ni"), ("ヌ", "nu"), ("ネ", "ne"), ("ノ", "no")],
+    [("ハ", "ha"), ("ヒ", "hi"), ("フ", "fu"), ("ヘ", "he"), ("ホ", "ho")],
+    [("マ", "ma"), ("ミ", "mi"), ("ム", "mu"), ("メ", "me"), ("モ", "mo")],
+    [("ヤ", "ya"), None, ("ユ", "yu"), None, ("ヨ", "yo")],
+    [("ラ", "ra"), ("リ", "ri"), ("ル", "ru"), ("レ", "re"), ("ロ", "ro")],
+    [("ワ", "wa"), None, None, None, ("ヲ", "wo")],
+    [("ン", "n"), None, None, None, None],
+]
+
+
+def render_kana_table(table):
+    for row in table:
+        cols = st.columns(5)
+        for col, cell in zip(cols, row):
+            if cell:
+                kana, romaji = cell
+                col.markdown(
+                    f"<div style='text-align:center; font-size:28px'>{kana}</div>"
+                    f"<div style='text-align:center; color:gray'>{romaji}</div>",
+                    unsafe_allow_html=True
+                )
+            else:
+                col.write("")
+
 API_URL = "http://127.0.0.1:8001"
 
 st.title("Nihongo - Japanese Learning Assistant")
 
 
-tab_review, tab_add, tab_stats, tab_furigana, tab_words = st.tabs(["Review", "Add Word", "Stats", "Furigana", "Words"])
+tab_review, tab_add, tab_stats, tab_furigana, tab_words, tab_kana = st.tabs(["Review", "Add Word", "Stats", "Furigana", "Words", "Kana"])
 
 with tab_review:
     if "review_queue" not in st.session_state:
@@ -166,3 +209,14 @@ with tab_words:
             requests.delete(f"{API_URL}/words/{word_id}")
             st.success(f"Deleted: {selected_label}")
             st.rerun()
+
+
+with tab_kana:
+    st.subheader("Kana chart")
+
+    kana_type = st.radio("Choose", ["Hiragana", "Katakana"], horizontal=True)
+
+    if kana_type == "Hiragana":
+        render_kana_table(HIRAGANA)
+    else:
+        render_kana_table(KATAKANA)

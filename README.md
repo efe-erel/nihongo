@@ -21,24 +21,27 @@ I wanted a tool tailored to how I actually study Japanese — combining a proper
 - **Frontend:** Streamlit
 - **NLP:** fugashi (MeCab-based tokenizer), unidic-lite
 - **Testing:** pytest
-- **Other:** pandas (word list display)
+- **Other:** pandas (word list display), pydantic-settings + python-dotenv (configuration)
 
 ## Project Structure
 
 ```
 nihongo/
 ├── app/
-│   ├── models/         # SQLAlchemy models (Word, ReviewLog, database setup)
-│   ├── schemas/         # Pydantic request/response schemas
-│   ├── services/         # Core logic (SM-2 algorithm, furigana analysis, streak calculation)
-│   ├── routes/            # API endpoints
+│   ├── config.py          # Settings (DATABASE_URL, etc.), loaded from .env
+│   ├── models/            # SQLAlchemy models (Word, ReviewLog, database setup)
+│   ├── schemas/           # Pydantic request/response schemas
+│   ├── services/          # Core logic (SM-2 algorithm, furigana analysis, streak calculation)
+│   ├── routes/             # API endpoints
 │   └── main.py
 ├── frontend/
 │   └── streamlit_app.py   # Streamlit UI
 ├── tests/
 │   └── test_srs.py         # Unit tests for the SM-2 algorithm
-└── data/
-    └── app.db                # SQLite database (gitignored)
+├── data/
+│   └── app.db              # SQLite database (gitignored)
+├── .env.example            # Template for local configuration
+└── .env                     # Your local config (gitignored, not committed)
 ```
 
 ## How It Works
@@ -56,7 +59,17 @@ cd nihongo
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
+cp .env.example .env
 ```
+
+## Configuration
+
+Settings live in `.env` (copied from `.env.example` above, and gitignored so your local values are never committed). Both variables have sensible defaults, so the app runs even without a `.env` file — you only need to edit it if you want to change these:
+
+| Variable | Default | Used by |
+|---|---|---|
+| `DATABASE_URL` | `sqlite:///data/app.db` | Backend (`app/config.py`) — the database the FastAPI app reads/writes. Relative SQLite paths are resolved against the project root, regardless of which directory you start `uvicorn` from. |
+| `API_URL` | `http://127.0.0.1:8001` | Frontend (`frontend/streamlit_app.py`) — the backend URL the Streamlit app calls. Change this if the backend runs on a different host/port (e.g. in Docker). |
 
 ## Running the App
 

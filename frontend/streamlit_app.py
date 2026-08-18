@@ -1,8 +1,15 @@
 
-import streamlit as st
-import requests
+import os
 import random
+from pathlib import Path
+
 import pandas as pd
+import requests
+import streamlit as st
+from dotenv import load_dotenv
+
+# Load the project-root .env regardless of the directory Streamlit runs from.
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 HIRAGANA = [
     [("あ", "a"), ("い", "i"), ("う", "u"), ("え", "e"), ("お", "o")],
@@ -47,7 +54,7 @@ def render_kana_table(table):
             else:
                 col.write("")
 
-API_URL = "http://127.0.0.1:8001"
+API_URL = os.getenv("API_URL", "http://127.0.0.1:8001")
 
 st.title("Nihongo - Japanese Learning Assistant")
 

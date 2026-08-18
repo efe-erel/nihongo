@@ -13,4 +13,4 @@ app.include_router(furigana.router)
 
 @app.get("/")
 def read_root():
-    return {"test"}
+    return {"status": "ok"}

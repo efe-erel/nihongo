@@ -27,8 +27,6 @@ def get_words(db: Session = Depends(get_db)):
     return db.query(Word).all()
 
 
-from app.models.review_log import ReviewLog
-
 @router.delete("/words/{word_id}")
 def delete_word(word_id: int, db: Session = Depends(get_db)):
     word = db.query(Word).filter(Word.id == word_id).first()
